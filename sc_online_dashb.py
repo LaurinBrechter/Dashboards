@@ -6,7 +6,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 import matplotlib.pyplot as plt
 
-
 class SupplyChain():
     def __init__(self, n_tiers, avg_n_sups):
         self.graph = nx.Graph()
@@ -53,6 +52,7 @@ def noise(time, noise_level=1, seed=None):
     rnd = np.random.RandomState(seed)
     return rnd.randn(len(time)) * noise_level
 
+
 @st.cache(persist=True, allow_output_mutation=True) 
 def create_sc_time_series(n_tiers, poisson_exp):
     sc = SupplyChain(n_tiers, poisson_exp)
@@ -64,7 +64,7 @@ def create_sc_time_series(n_tiers, poisson_exp):
     baseline = 100
     amplitude = 40
     slope = 0.20
-    noise_level = 20
+    noise_level = 11
 
     # Create the series
     series = baseline + trend(time, slope) + seasonality(time, period=183, amplitude=amplitude)
@@ -82,15 +82,10 @@ df_tier = pd.DataFrame(tiers.values(), index=tiers.keys())
 tier_num = pd.factorize(df_tier[0])[0]
 
 company_selected = st.sidebar.selectbox("Please select a Company in the Network", list(range(len(sc.graph.nodes))))
-
-# tier_selected = st.sidebar.selectbox("Please select a Tier of the Network", sc.tier_names)
 tier_selected = st.sidebar.multiselect("Please select one or more Tiers of the Network", sc.tier_names, default=sc.tier_names)
 
-st.write(tier_selected)
 
-opacity_list = np.where(np.isin(df_tier[0], tier_selected), 1, 0.5)
-
-st.write(np.isin(tiers, tier_selected))
+opacity_list = np.where(np.isin(df_tier[0], tier_selected), 1, 0.3)
 
 edge_x = []
 edge_y = []
@@ -108,9 +103,10 @@ for edge in sc.graph.edges():
     
 edge_trace = go.Scatter(
     x=edge_x, y=edge_y,
-    line=dict(width=0.5, color='#25488e'),
+    line=dict(width=0.5, color='#ffffcc'),
     hoverinfo='none',
-    mode='lines')
+    mode='lines',
+    )
 
 
 node_x = []
@@ -120,24 +116,20 @@ for node in sc.graph.nodes():
     node_x.append(x)
     node_y.append(y)
     
+degrees = dict(sc.graph.degree)
+
 node_trace = go.Scatter(
     x=node_x, y=node_y,
     mode='markers',
-    hoverinfo='text'
+    hoverinfo='text',
+    marker = dict(
+        size = 10,
+        opacity = opacity_list,
+        color = tier_num,
+        colorscale = "earth"),
+    text = [str(i) + " Number of Links: " + str(degrees[i]) for i in degrees]
     )
 
-
-node_trace.marker.colorscale = 'earth'    
-node_trace.marker.color = tier_num
-node_trace.marker.opacity = opacity_list
-
-degrees = dict(sc.graph.degree)
-node_trace.text = [str(i) + " Number of Links: " + str(degrees[i]) for i in degrees]
-    # marker=dict(
-    #         showscale=True,
-    #         colorscale='YlGnBu',
-    #         reversescale=True,
-    #         size=10,
     #         colorbar=dict(
     #             thickness=15,
     #             title='Node Connections',
@@ -146,11 +138,11 @@ node_trace.text = [str(i) + " Number of Links: " + str(degrees[i]) for i in degr
     #         ),
     #         line_width=2))
     
+st.markdown("### Supply Chain Network Graph")
 
 
 graph_fig = go.Figure(data=[edge_trace, node_trace],
              layout=go.Layout(
-                title='<br>Supply Chain',
                 titlefont_size=16,
                 showlegend=False,
                 hovermode='closest',
@@ -158,11 +150,13 @@ graph_fig = go.Figure(data=[edge_trace, node_trace],
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                 )
+
 st.write(graph_fig)
 
+st.markdown("### Customer Demand")
 
 demand = pd.DataFrame(series, index=dt, columns=["Demand"])
-demand_fig = px.line(x=demand.index, y=demand["Demand"], title="Customer Demand")
+demand_fig = px.line(x=demand.index, y=demand["Demand"])
 demand_fig.update_layout(
     xaxis_title = "Date",
     yaxis_title ="Demand"
