@@ -151,6 +151,34 @@ graph_fig = go.Figure(data=[edge_trace, node_trace],
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                 )
 
+def ttr_curve():
+    service_level = np.array([0.93] * len(dt))
+    service_level -= np.random.normal(0, 0.03, size=len(service_level))
+    service_level = np.where(service_level >= 1, 0.97, service_level)
+    df = pd.DataFrame(service_level,index=dt, columns=["service level"])
+
+    th = 0.93
+    fig = go.Figure()
+
+    line_trace = go.Scatter(x=df.index, y=df["service level"], 
+                             mode="lines", name="service level")
+    point_trace = go.Scatter(x=df.index,  y=df["service level"].where(df["service level"] <= th), 
+                             mode="lines", name="below for >= 2 days")
+
+    fig = go.Figure(data=[line_trace, point_trace])
+
+    fig.add_hline(y=0.93, line_dash="dash", line_color="red", annotation_text="93% service level")
+    fig.update_layout(yaxis_range=[0,1],
+                      title="Service Level of company X",
+                      xaxis_title="Date",
+                      yaxis_title="Service Level (%order fullfilled on time)")
+    
+    return fig
+
+ttr_fig = ttr_curve()
+
+st.write(ttr_fig)
+
 st.write(graph_fig)
 
 st.markdown("### Customer Demand")
