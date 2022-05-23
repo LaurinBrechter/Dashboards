@@ -8,6 +8,7 @@ import networkx as nx
 import numpy as np
 from sc_time_series_creator import SupplyChain, trend, trend, seasonal_pattern, seasonality, noise
 import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
 
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
@@ -17,10 +18,19 @@ positions = nx.spring_layout(g)
 node_data = [{"data": {"id": str(i), "label": str(i)}, 
               "position": {"x": positions[i][0]*1000, "y": positions[i][1]*1000}, 
               "locked":True,
-              "style": {"shape": "rectangle"}} 
+              'classes': 'red',
+              "style": {"shape": "circle",
+                        'width': 30,
+                        'height': 30,
+                        "color": "white",
+                        }
+
+              } 
               for i in list(g.nodes())]
 
-edge_data = [{'data': {'source': str(i[0]), 'target': str(i[1])}} 
+edge_data = [{'data': {'source': str(i[0]), 'target': str(i[1])},
+              "style": {'line-color': '#f2f20d', 
+                        'width': 2}} 
               for i in g.edges()]
 
 CONTENT_STYLE = {
@@ -33,8 +43,6 @@ CONTENT_STYLE = {
 SIDEBAR_STYLE = {
     
     "textAlign":"left"
-    
-    
     # "background-color": "#f8f9fa"
 }
 
@@ -43,61 +51,65 @@ HEADER_STYLE = {
     "textAlign": "center"
 }
 
+GRAPH_STYLE = go.Layout(title="First Graph", 
+              margin={"b": 0, "l":10, "r": 10, "t":20},
+              font={"color": "#adafae"},
+              paper_bgcolor="#0B243B",
+              plot_bgcolor="#0B243B"
+    )
+    
+
+fig1 = go.Figure(data=go.Scatter(y=[1,2,3,4]), 
+                layout=GRAPH_STYLE
+)
+
+fig2 = go.Figure(data=go.Scatter(y=[1,2,3,4]), 
+                layout=GRAPH_STYLE
+)
+
 
 app.layout = html.Div(
     [
+        html.Div(html.Br()),
+
         dbc.Row([
 
-            
+            dbc.Col([
+                html.H1("Network", style=HEADER_STYLE),
+                dcc.Graph(figure=fig1),
+                dcc.Graph(figure=fig2)
+
+            ], width=3),
 
             dbc.Col([
-
-                html.Br(),
-
-                html.H1("Supply Chain Graph", style=HEADER_STYLE),
-
-                html.Hr(),
-
+                
+                dbc.Row([
+                    html.Div(),
+                    html.H1("Supply Chain Monitoring", style=HEADER_STYLE),
+                    
+                ]),
+                
                 cyto.Cytoscape(
                     id='org-chart',
                     layout={'name': 'preset'},
-                    style={'width': '100%', 'height': '700px'},
+                    style={'width': '100%', 'height': '700px', "background-color":"#0B243B"},
                     elements=[
         
                         *node_data, *edge_data
                 
                     ]
-                    # stylesheet=[
-                    #     {
-                    #         'selector': 'node',
-                    #         'style': {
-                    #             'label': 'data(firstname)'
-                    #         }
-                    #     },
-                    #     {
-                    #         'selector': '[firstname !*= "ert"]',
-                    #         'style': {
-                    #             'background-color': '#FF4136',
-                    #             'shape': 'rectangle'
-                    #         }
-                    #     }
-                    # ]
-
-                )], width=9),
+                    
+                )], width=6),
 
             dbc.Col([
                 
-                html.Br(),
-
                 html.Div([
 
+                    html.H1("Node", style=HEADER_STYLE),
                     
-                    html.H1("Node Info", style=HEADER_STYLE),
-                    html.Hr(),
-
                     html.Div(id="node-info"),
 
-                    html.H1("Network Info", style=HEADER_STYLE),
+                    
                     html.Hr(),
 
                     html.Div(id="network-info", children=["The following indicators help monitor the state of the network. They were split amongst 5 different dimensions"]),
@@ -142,10 +154,9 @@ app.layout = html.Div(
                             )
                         ]
                     )
-                    
                     ], style=SIDEBAR_STYLE
-                
-                )], width=3, style={"background-color": "#303030"}),
+                )], width=3)
+
         ])
     ]
 )
@@ -157,7 +168,13 @@ app.layout = html.Div(
 )
 def update_nodes(data):
     print(data)
-    return ["Hello"]
+    if data:
+        node = int(data["id"])
+        return ["Node Degree: {}".format(nx.degree(g)[node]), 
+                html.P("This is nice"),
+                ]
+    else:
+        return [html.Div("Select a Node to see Degree")]
 
 
 if __name__ == "__main__":
