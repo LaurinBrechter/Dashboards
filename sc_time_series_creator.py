@@ -4,7 +4,7 @@ from random import randint
 
 class SupplyChain():
     def __init__(self, n_tiers, avg_n_sups, avg_decay=0, ubound_add_edges = 0, lbound_add_edges = 0):
-        self.graph = nx.Graph()
+        self.graph = nx.DiGraph()
         self.graph.add_node(0, tier="TIER0")
         self.n_tiers = n_tiers
         
@@ -20,28 +20,33 @@ class SupplyChain():
             # search for companies in that tier
             nodes_in_tier = [node for node in self.graph.nodes(data=True) if node[1]["tier"] == tier_name]
             
+            n_sups=2
             # for every company in the tier create suppliers.
             for node in nodes_in_tier:
-                n_sups = np.random.poisson(avg_n_sups)
                 
-
+                
                 self.graph.add_nodes_from(range(comp_id, n_sups+comp_id), tier="TIER" + str(i+1))
                 
-                to_add = [(node[0], j, {"inf_sharing":np.random.random()}) for j in range(comp_id, n_sups+comp_id)]
+                to_add = [(j, node[0], {"production":np.random.random()}) for j in range(comp_id, n_sups+comp_id)]
         
                 self.graph.add_edges_from(to_add)
                 
                 comp_id += n_sups
             
+                n_sups = np.random.poisson(avg_n_sups)
             # add additional cross edges.
             if b > 0:
                 for node in nodes_in_tier:
                     # extra_conns = np.random.randint(a,b)
                     extra_conns = randint(a,b)
-                    extra_nodes = np.random.choice(list(set(list(self.graph.nodes())) - set([node[0]])), extra_conns)
 
-                    self.graph.add_edges_from([(node[0], j) for j in extra_nodes])
-                    comp_id += extra_conns
+                    nodes_to_choose = list(set(list(self.graph.nodes())) - set([node[0]])) # can choose all the nodes expect the own node.
+
+                    if len(nodes_to_choose) > 0:
+                        extra_nodes = np.random.choice(nodes_to_choose, extra_conns)
+
+                        self.graph.add_edges_from([(node[0], j, {"production":np.random.random()}) for j in extra_nodes])
+                        comp_id += extra_conns
 
         # also add edges for the last layer
         if b > 0:
@@ -50,9 +55,13 @@ class SupplyChain():
             for node in last_tier_nodes:
                 # extra_conns = np.random.randint(a,b)
                 extra_conns = randint(a,b)
-                extra_nodes = np.random.choice(list(set(list(self.graph.nodes())) - set([node[0]])), extra_conns)
-                self.graph.add_edges_from([(node[0], j) for j in extra_nodes])
-                comp_id += extra_conns
+
+                nodes_to_choose = list(set(list(self.graph.nodes())) - set([node[0]]))
+                
+                if len(nodes_to_choose) > 0:
+                    extra_nodes = np.random.choice(nodes_to_choose, extra_conns)
+                    self.graph.add_edges_from([(node[0], j, {"production":np.random.random()}) for j in extra_nodes])
+                    comp_id += extra_conns
             
         # self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
 
