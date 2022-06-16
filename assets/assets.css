@@ -1,0 +1,25 @@
+body {
+    background-color: #121212;
+    font-family: 'Arial', Courier, monospace;
+    color: rgb(255, 255, 255);
+    overflow: hidden;
+}
+
+div#nice.row-top.row {
+    border-radius: 20px;
+    background-color: #606060;
+    border-width: 10px;
+    box-shadow: #606060 0px 0px 20px 0px;
+    border-color: rgb(41, 56, 55);
+    padding: 10px 10px 10px 10px;
+    margin: 10px 10px 10px 10px;
+}
+
+.accordion-button {
+    color: white;
+    background-color: #606060
+}
+
+#div.col-3 {
+    border-radius: 10px;
+}
