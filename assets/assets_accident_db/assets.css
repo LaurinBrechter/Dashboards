@@ -1,0 +1,13 @@
+body {
+    background-color: #191a1a;
+    font-family: 'Arial', Courier, monospace;
+    color: #d6d6d6; /*rgb(255, 255, 255); */
+    overflow-x: hidden;
+    margin-top:1%;
+    margin-right: 5%;
+    margin-left: 5%;
+}
+
+#borough-id {
+    background-color: black;
+}
